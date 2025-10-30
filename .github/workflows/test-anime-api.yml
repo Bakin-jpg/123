@@ -16,11 +16,7 @@ jobs:
         image: mongo:6.0
         ports:
           - 27017:27017
-        options: >-
-          --health-cmd "mongosh --eval 'db.runCommand({ping: 1})'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+        options: "--health-cmd \"mongosh --eval 'db.runCommand({ping: 1})'\" --health-interval 10s --health-timeout 5s --health-retries 5"
     
     steps:
     - name: Checkout code
@@ -53,7 +49,7 @@ jobs:
         echo "Waiting for server..."
         for i in {1..30}; do
           if curl -s http://localhost:8001/api/ > /dev/null; then
-            echo "âœ… Server is ready!"
+            echo "✅ Server is ready!"
             break
           fi
           echo "Waiting... ($i/30)"
@@ -63,76 +59,76 @@ jobs:
     - name: Test API Endpoints
       run: |
         echo "========================================="
-        echo "ðŸ§ª TESTING ANIME SCRAPER API"
+        echo "🧪 TESTING ANIME SCRAPER API"
         echo "========================================="
         echo ""
         
         # Test 1: Root endpoint
-        echo "1ï¸âƒ£  Testing root endpoint..."
-        curl -s http://localhost:8001/api/ | python3 -c "import sys, json; d=json.load(sys.stdin); print('âœ… Root OK' if d.get('message') else 'âŒ Root FAILED'); print(json.dumps(d, indent=2))"
+        echo "1️⃣  Testing root endpoint..."
+        curl -s -f http://localhost:8001/api/ | python3 -c "import sys, json; d=json.load(sys.stdin); print('✅ Root OK' if d.get('message') else '❌ Root FAILED'); print(json.dumps(d, indent=2))"
         echo ""
         
         # Test 2: Trigger scraping
-        echo "2ï¸âƒ£  Triggering anime scraping..."
-        curl -s -X POST http://localhost:8001/api/scrape | python3 -c "import sys, json; d=json.load(sys.stdin); print('âœ… Scrape triggered:', d.get('message'))"
+        echo "2️⃣  Triggering anime scraping..."
+        curl -s -f -X POST http://localhost:8001/api/scrape | python3 -c "import sys, json; d=json.load(sys.stdin); print('✅ Scrape triggered:', d.get('message'))"
         echo ""
         
         # Wait for scraping
-        echo "â³ Waiting for scraping to complete (60 seconds)..."
+        echo "⏳ Waiting for scraping to complete (60 seconds)..."
         sleep 60
         
         # Test 3: Check scraper status
         echo ""
-        echo "3ï¸âƒ£  Checking scraper status..."
-        curl -s http://localhost:8001/api/scrape/status | python3 -c "import sys, json; d=json.load(sys.stdin); print(f\"âœ… Status: {d['message']}\"); print(f\"ðŸ“Š Anime cached: {d['anime_count']}\"); print(f\"â° Last run: {d['last_run']}\")"
+        echo "3️⃣  Checking scraper status..."
+        curl -s -f http://localhost:8001/api/scrape/status | python3 -c "import sys, json; d=json.load(sys.stdin); print(f\"✅ Status: {d['message']}\"); print(f\"📊 Anime cached: {d['anime_count']}\"); print(f\"⏰ Last run: {d['last_run']}\")"
         echo ""
         
         # Test 4: Get anime list
-        echo "4ï¸âƒ£  Testing anime list..."
-        ANIME_COUNT=$(curl -s "http://localhost:8001/api/anime?limit=5" | python3 -c "import sys, json; d=json.load(sys.stdin); print(d['total'])")
+        echo "4️⃣  Testing anime list..."
+        ANIME_COUNT=$(curl -s -f "http://localhost:8001/api/anime?limit=5" | python3 -c "import sys, json; d=json.load(sys.stdin); print(d['total'])")
         if [ "$ANIME_COUNT" -gt 0 ]; then
-          echo "âœ… Found $ANIME_COUNT anime in cache"
-          curl -s "http://localhost:8001/api/anime?limit=3" | python3 -c "import sys, json; d=json.load(sys.stdin); [print(f\"  - {a['title']} ({a['total_episodes']} eps)\") for a in d['data']]"
+          echo "✅ Found $ANIME_COUNT anime in cache"
+          curl -s -f "http://localhost:8001/api/anime?limit=3" | python3 -c "import sys, json; d=json.load(sys.stdin); [print(f\"  - {a['title']} ({a['total_episodes']} eps)\") for a in d['data']]"
         else
-          echo "âŒ No anime found"
+          echo "❌ No anime found"
           exit 1
         fi
         echo ""
         
         # Test 5: Search functionality
-        echo "5ï¸âƒ£  Testing search..."
-        curl -s "http://localhost:8001/api/anime/search?q=drama" | python3 -c "import sys, json; d=json.load(sys.stdin); print(f\"âœ… Search found {d['total']} results for '{d['query']}'\")"
+        echo "5️⃣  Testing search..."
+        curl -s -f "http://localhost:8001/api/anime/search?q=drama" | python3 -c "import sys, json; d=json.load(sys.stdin); print(f\"✅ Search found {d['total']} results for '{d['query']}'\")"
         echo ""
         
         # Test 6: Get specific anime
-        echo "6ï¸âƒ£  Testing anime detail..."
-        ANIME_ID=$(curl -s "http://localhost:8001/api/anime?limit=1" | python3 -c "import sys, json; d=json.load(sys.stdin); print(d['data'][0]['id'])")
-        curl -s "http://localhost:8001/api/anime/$ANIME_ID" | python3 -c "import sys, json; d=json.load(sys.stdin); print(f\"âœ… Anime: {d['title']}\"); print(f\"  Genres: {', '.join(d['genres'][:3])}\"); print(f\"  Episodes: {len(d['episodes'])}\"); print(f\"  Year: {d['release_year']}\")"
+        echo "6️⃣  Testing anime detail..."
+        ANIME_ID=$(curl -s -f "http://localhost:8001/api/anime?limit=1" | python3 -c "import sys, json; d=json.load(sys.stdin); print(d['data'][0]['id'])")
+        curl -s -f "http://localhost:8001/api/anime/$ANIME_ID" | python3 -c "import sys, json; d=json.load(sys.stdin); print(f\"✅ Anime: {d['title']}\"); print(f\"  Genres: {', '.join(d['genres'][:3])}\"); print(f\"  Episodes: {len(d['episodes'])}\"); print(f\"  Year: {d['release_year']}\")"
         echo ""
         
         # Test 7: Episode stream (iframe test)
-        echo "7ï¸âƒ£  Testing episode stream (iframe scraping)..."
-        echo "â³ This will take ~10-15 seconds to scrape iframe URL..."
-        IFRAME_RESULT=$(curl -s "http://localhost:8001/api/anime/$ANIME_ID/episodes/1/stream")
+        echo "7️⃣  Testing episode stream (iframe scraping)..."
+        echo "⏳ This will take ~10-15 seconds to scrape iframe URL..."
+        IFRAME_RESULT=$(curl -s -f "http://localhost:8001/api/anime/$ANIME_ID/episodes/1/stream")
         IFRAME_URL=$(echo $IFRAME_RESULT | python3 -c "import sys, json; d=json.load(sys.stdin); print(d.get('iframe_url', 'null'))")
         
         echo "$IFRAME_RESULT" | python3 -c "import sys, json; d=json.load(sys.stdin); print(f\"  Episode: {d['episode_number']}\"); print(f\"  Title: {d['title']}\"); print(f\"  Iframe URL: {d.get('iframe_url', 'Not cached yet')}\")"
         
         if [ "$IFRAME_URL" != "null" ] && [ "$IFRAME_URL" != "None" ]; then
-          echo "âœ… Iframe URL successfully scraped!"
+          echo "✅ Iframe URL successfully scraped!"
         else
-          echo "âš ï¸  Iframe URL not available (might be due to timeout or site protection)"
+          echo "⚠️  Iframe URL not available (might be due to timeout or site protection)"
         fi
         echo ""
         
         echo "========================================="
-        echo "âœ… ALL TESTS COMPLETED!"
+        echo "✅ ALL TESTS COMPLETED!"
         echo "========================================="
     
     - name: Show server logs on failure
       if: failure()
       run: |
         echo "========================================="
-        echo "ðŸ” SERVER LOGS"
+        echo "🔥 SERVER LOGS"
         echo "========================================="
         cat backend/server.log || echo "No logs found"
